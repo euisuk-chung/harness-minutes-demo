@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr merge:*)",
+      "Write(inbox/**)",
+      "Edit(inbox/**)",
+      "Write(samples/**)",
+      "Edit(samples/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {"hooks": [{"type": "command", "command": "uv run python \"$CLAUDE_PROJECT_DIR/.claude/hooks/show_status.py\""}]}
+    ],
+    "PreToolUse": [
+      {"matcher": "*", "hooks": [{"type": "command", "command": "uv run python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py\""}]},
+      {"matcher": "Write|Edit|MultiEdit|Bash", "hooks": [{"type": "command", "command": "uv run python \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect_sources.py\""}]}
+    ],
+    "PostToolUse": [
+      {"matcher": "Write|Edit|MultiEdit", "hooks": [{"type": "command", "command": "uv run python \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_review.py\""}]}
+    ],
+    "Stop": [
+      {"hooks": [{"type": "command", "command": "uv run python \"$CLAUDE_PROJECT_DIR/.claude/hooks/next_step.py\""}]}
+    ]
+  }
+}
