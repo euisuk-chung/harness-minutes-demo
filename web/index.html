@@ -695,7 +695,7 @@ function renderBelow() {
   else { const last = [...events].reverse().find(e => e.step === "review");
     if (last) { rep = Object.fromEntries(keys.map(k => [k, { pass: true, problems: [] }]));
       const m = String(last.note || "").match(/(M\d) rejected — (.*)$/); if (last.signal && m) rep[m[1]] = { pass: false, problems: [m[2]] }; } }
-  $("#checks").innerHTML = keys.map(k => { const c = rep && rep[k];
+  $("#checks").innerHTML = !rep ? "" : keys.map(k => { const c = rep[k];   // 검수 장면에 닿기 전에는 목록을 보이지 않는다
     const cls = !c ? "none" : c.pass ? "ok" : "bad";
     const label = k === "M3" && (ctx.roster || []).length ? CHECK.M3r : CHECK[k];
     return `<li><span class="box ${cls}">${!c ? "" : c.pass ? "✓" : "✕"}</span><span><b>${k}</b> ${label}${c && c.problems.length ? c.problems.map(p => `<span class="why">${esc(p)}</span>`).join("") : ""}${c && (c.notes || []).length ? c.notes.map(n => `<span class="heed">${esc(heed(n))}</span>`).join("") : ""}</span></li>`; }).join("");
