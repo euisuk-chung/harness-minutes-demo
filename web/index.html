@@ -713,6 +713,16 @@ function renderBelow() {
   else doc = `<div class="blank">${!events.length ? "녹취록이 inbox 로 가고 있습니다." : v ? `AI 가 회의록 초안을 쓰고 있습니다 (${v}/${MAX}).` : "녹취록을 모으고 있습니다."}<i></i><i></i><i></i><i></i></div>`;
   if ($("#doc").dataset.k !== doc) { $("#doc").innerHTML = doc; $("#doc").dataset.k = doc; }
   renderTranscript(r, events);
+  renderTerm(r, events, atEnd);
+}
+
+// 폴더 감시 출력도 지금 장면까지만 — 요청을 연 줄(트리거)은 그 장면에서, 그 뒤 줄(지나온 길)은 끝 장면에서
+let TERM = [];
+function renderTerm(r, events, atEnd) {
+  const i = r ? TERM.indexOf(r.trigger) : -1;
+  const lines = i < 0 || atEnd ? TERM : TERM.slice(0, events.some(e => e.event === "triggered") ? i + 1 : i);
+  const term = $("#term"), text = lines.join("\n") || "(아직 출력 없음)";
+  if (term.textContent !== text) { term.textContent = text; term.scrollTop = term.scrollHeight; }
 }
 
 // ── 원문 | 회의록 — 근거 줄을 잇는다 ──
@@ -827,7 +837,7 @@ async function tick() {
   $("#mode").className = "mode " + s.mode; $("#mode").textContent = s.mode === "replay" ? "다시 보기, 모델을 부르지 않음" : "실제 실행, Claude 를 부름";
   $("#watch").className = "watch" + (s.watching ? " on" : ""); $("#watch span").textContent = s.watching ? `inbox 를 ${s.interval}초마다 보는 중` : "폴더 감시 꺼짐";
   $("#drop-hint").style.display = s.requests.length ? "none" : "";
-  const term = $("#term"); term.textContent = s.log.join("\n") || "(아직 출력 없음)"; term.scrollTop = term.scrollHeight;
+  TERM = s.log; if (!PLAYER.r) renderTerm(null);
   if (lastLog >= 0 && s.log_total > lastLog && s.log.slice(-(s.log_total - lastLog)).some(l => l.startsWith("skip:"))) {
     bounce(); toast("같은 녹취록이 또 들어와 건너뛰었습니다. 회의록은 한 장 그대로입니다");
   }
