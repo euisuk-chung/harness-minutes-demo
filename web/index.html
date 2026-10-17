@@ -177,6 +177,8 @@ ol.log li.tool .t { font-size: 12.5px; color: var(--pencil); }
 .pbtn.main { width: 40px; height: 40px; background: var(--ink); }
 .pbtn.main svg { fill: #fff; width: 18px; height: 18px; }
 .pbtn:disabled { opacity: .3; cursor: default; }
+.pbtn.ready { background: var(--ink); }   /* 한 장면씩 넘길 때 — 다음 장면이 기다리고 있다 */
+.pbtn.ready svg { fill: #fff; }
 .ticks { flex: 1; display: flex; align-items: center; gap: 3px; height: 26px; min-width: 160px; }
 .ticks button { flex: 1; height: 10px; border: 0; border-radius: 2px; background: var(--desk-2); padding: 0; transition: height .15s; }
 .ticks button.past { background: var(--pencil); }
@@ -591,7 +593,10 @@ function paintControls() {
   $("#player").classList.toggle("off", !PLAYER.r);
   $("#play").innerHTML = PLAYER.playing ? ICON.pause : ICON.play;
   $("#play").setAttribute("aria-label", PLAYER.playing ? "멈춤" : (PLAYER.pos >= PLAYER.steps.length ? "처음부터 재생" : "재생"));
-  ["#play", "#next", "#prev"].forEach(s => $(s).disabled = !done);
+  $("#play").disabled = !done;
+  $("#prev").disabled = !PLAYER.r || PLAYER.pos <= 1;
+  $("#next").disabled = !PLAYER.r || PLAYER.pos >= PLAYER.steps.length;   // 진행 중에도 기록된 장면까지는 넘길 수 있다
+  $("#next").classList.toggle("ready", !$("#next").disabled && !PLAYER.playing && !PLAYER.following);
   $("#follow").hidden = done || !PLAYER.r || PLAYER.following;
 }
 const ICON = {
@@ -606,8 +611,8 @@ document.querySelectorAll("[data-rate]").forEach(b => b.onclick = () => {
 document.addEventListener("keydown", e => {
   if (["INPUT", "TEXTAREA"].includes(e.target.tagName) || e.target.closest("summary")) return;
   if (e.key === " ") { e.preventDefault(); playPause(); }
-  else if (e.key === "ArrowRight") next();
-  else if (e.key === "ArrowLeft") prev();
+  else if (e.key === "ArrowRight" || e.key === "PageDown") next();   // PageDown·PageUp — 발표용 리모컨
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") prev();
 });
 function select(r, fresh) {
   stopMotion(); PLAYER.r = r; PLAYER.steps = buildSteps(r);
@@ -615,6 +620,7 @@ function select(r, fresh) {
     resetStage(); PLAYER.pos = 0; paintTicks(); renderBelow();
     const at = +(location.hash.match(/scene=(\d+)/) || [])[1];   // 주소 끝 #scene=N — 끝난 요청을 N번째 장면에서 연다
     if (r.terminal && !fresh) await runTo(at ? Math.min(at, PLAYER.steps.length) : PLAYER.steps.length, false);
+    else if (MODE === "replay") await runTo(1, true);   // 다시 보기 — 첫 장면만 보이고, 설명하며 다음(→)으로 한 장면씩 넘긴다
     else { PLAYER.following = true; loop(); }
   });
 }

@@ -114,9 +114,19 @@ def request_view(d: Path) -> dict:
     }
 
 
+def request_views() -> list[dict]:
+    views = []
+    for d in REQUESTS.iterdir() if REQUESTS.is_dir() else []:
+        try:
+            if d.is_dir():
+                views.append(request_view(d))
+        except OSError:  # 요청 폴더가 읽는 사이에 지워지거나 바뀜 — 다음 폴링에서 다시 본다
+            continue
+    return sorted(views, key=lambda r: r["started"], reverse=True)
+
+
 def state() -> dict:
-    reqs = sorted((request_view(d) for d in REQUESTS.iterdir() if d.is_dir()), key=lambda r: r["started"], reverse=True) \
-        if REQUESTS.is_dir() else []
+    reqs = request_views()
     try:
         lines = LOG.read_text(encoding="utf-8").splitlines()
     except OSError:

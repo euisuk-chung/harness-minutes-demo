@@ -5,9 +5,7 @@
       "Bash(wget:*)",
       "Bash(git push:*)",
       "Bash(gh pr merge:*)",
-      "Write(inbox/**)",
       "Edit(inbox/**)",
-      "Write(samples/**)",
       "Edit(samples/**)"
     ]
   },
